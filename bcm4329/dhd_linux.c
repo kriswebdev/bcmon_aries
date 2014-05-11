@@ -487,7 +487,7 @@ static char dhd_version[] = "Dongle Host Driver, version " EPI_VERSION_STR
 
 
 #if defined(CONFIG_WIRELESS_EXT)
-struct iw_statistics *dhd_get_wireless_stats(struct net_device *dev);
+extern struct iw_statistics *dhd_get_wireless_stats(struct net_device *dev);
 #endif /* defined(CONFIG_WIRELESS_EXT) */
 
 static void dhd_dpc(ulong data);
@@ -788,7 +788,7 @@ _dhd_set_multicast_list(dhd_info_t *dhd, int ifidx)
 	char *buf, *bufp;
 	uint buflen;
 	int ret;
-	printf("_dhd_set_multicast_list: enter!\n");
+	DHD_TRACE("_dhd_set_multicast_list: enter!\n");
 	ASSERT(dhd && dhd->iflist[ifidx]);
 	dev = dhd->iflist[ifidx]->net;
 
@@ -931,7 +931,7 @@ _dhd_set_mac_address(dhd_info_t *dhd, int ifidx, struct ether_addr *addr)
 }
 
 #ifdef SOFTAP
-extern struct net_device *ap_net_dev;
+struct net_device *ap_net_dev = NULL;
 /* semaphore that the soft AP CODE waits on */
 extern struct semaphore ap_eth_sema;
 #endif
@@ -977,7 +977,7 @@ dhd_op_if(dhd_if_t *ifp)
 					__FUNCTION__, err));
 				ret = -EOPNOTSUPP;
 			} else {
-#ifdef SOFTAP
+#if defined(SOFTAP) && defined(CONFIG_WIRELESS_EXT)
 				flags = dhd_os_spin_lock(&dhd->pub);
 				/* save ptr to wl0.1 netdev for use in wl_iw.c  */
 				ap_net_dev = ifp->net;
@@ -1260,7 +1260,7 @@ dhd_rx_frame(dhd_pub_t *dhdp, int ifidx, void *pktbuf, int numpkt, int chan)
 	dhd_if_t *ifp;
 	wl_event_msg_t event;
 
-	DHD_TRACE(("%s: Enter\n", __FUNCTION__));
+	DHD_TRACE(("%s: Enter, chan=%d\n", __FUNCTION__, chan));
 
 	save_pktbuf = pktbuf;
 
@@ -1292,11 +1292,15 @@ dhd_rx_frame(dhd_pub_t *dhdp, int ifidx, void *pktbuf, int numpkt, int chan)
 
 		if (chan==15) {
 			skb = bcmon_decode_skb(skb);
+			DHD_TRACE(("%s: Decoding bcmon packet\n", __FUNCTION__));
+			//prhex("Dumping...", skb->data, skb->len);
+			
 			if(skb==0)
 			{
 				PKTFREE(dhdp->osh, skb, FALSE);
 				return;
 			}
+			//pcap_dump(skb->data, skb->len); // The place to dump!
 			/*
 			skb_set_mac_header(skb, 0);
 			skb->ip_summed = CHECKSUM_UNNECESSARY;
@@ -1340,6 +1344,7 @@ dhd_rx_frame(dhd_pub_t *dhdp, int ifidx, void *pktbuf, int numpkt, int chan)
 		dhdp->dstats.rx_bytes += skb->len;
 		dhdp->rx_packets++; /* Local count */
 
+		
 		if (in_interrupt()) {
 			netif_rx(skb);
 		} else {
@@ -1954,8 +1959,10 @@ dhd_open(struct net_device *net)
 	int ifidx;
 
 	/*  Force start if ifconfig_up gets called before START command */
+#if defined(CONFIG_WIRELESS_EXT)
 	wl_control_wl_start(net);
 
+#endif 
 	ifidx = dhd_net2idx(dhd, net);
 	DHD_TRACE(("%s: ifidx %d\n", __FUNCTION__, ifidx));
 
@@ -2512,6 +2519,8 @@ dhd_net_attach(dhd_pub_t *dhdp, int ifidx)
 		wl_iw_iscan_set_scan_broadcast_prep(net, 1);
 #endif /* SOFTAP */
 #endif /* CONFIG_FIRST_SCAN */
+#else
+#error CONFIG_WIRELESS_EXT is mandatory for bcmon
 #endif /* CONFIG_WIRELESS_EXT */
 
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 27))
@@ -3209,7 +3218,11 @@ int net_os_send_hang_message(struct net_device *dev)
 	if (dhd) {
 		if (!dhd->pub.hang_was_sent) {
 			dhd->pub.hang_was_sent = 1;
-			ret = wl_iw_send_priv_event(dev, "HANG");
+#if defined(CONFIG_WIRELESS_EXT)
+			wl_iw_send_priv_event(dev, "HANG");
+	/*#else
+			wl_cfg80211_hang(dev, WLAN_REASON_UNSPECIFIED);*/
+#endif
 		}
 	}
 	return ret;

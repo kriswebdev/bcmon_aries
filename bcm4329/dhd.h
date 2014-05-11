@@ -463,3 +463,6 @@ extern int net_os_set_packet_filter(struct net_device *dev, int val);
 extern int net_os_rxfilter_add_remove(struct net_device *dev, int val, int num);
 
 #endif /* _dhd_h_ */
+
+extern struct iw_statistics *dhd_get_wireless_stats(struct net_device *dev);
+extern int dhd_wait_pend8021x(struct net_device *dev);

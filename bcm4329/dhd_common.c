@@ -72,7 +72,7 @@ void dhd_iscan_lock(void);
 void dhd_iscan_unlock(void);
 
 #if defined(SOFTAP)
-extern bool ap_fw_loaded;
+bool ap_fw_loaded = FALSE;
 #endif
 #if defined(KEEP_ALIVE)
 int dhd_keep_alive_onoff(dhd_pub_t *dhd, int ka_on);
@@ -148,6 +148,12 @@ dhd_common_init(void)
 	 */
 
 	dhd_msg_level = 1; //0xffffffff;//DHD_ERROR_VAL;
+	
+// bcmon debug add
+#if defined(DHD_DEBUG)
+	dhd_msg_level = 0xffffffff;
+#endif
+	
 #ifdef CONFIG_BCM4329_FW_PATH
 	strncpy(fw_path, CONFIG_BCM4329_FW_PATH, MOD_PARAM_PATHLEN-1);
 #else

@@ -58,6 +58,8 @@
 #include <dhdioctl.h>
 #include <sdiovar.h>
 
+#include "bcmon.h"
+
 #ifdef DHD_DEBUG
 #include <hndrte_cons.h>
 #endif /* DHD_DEBUG */
@@ -968,6 +970,7 @@ dhdsdio_txpkt(dhd_bus_t *bus, void *pkt, uint chan, bool free_pkt)
 	    (((DHD_CTL_ON() && (chan == SDPCM_CONTROL_CHANNEL)) ||
 	      (DHD_DATA_ON() && (chan != SDPCM_CONTROL_CHANNEL))))) {
 		prhex("Tx Frame", frame, len);
+		// pcap_dump(frame, len);
 	} else if (DHD_HDRS_ON()) {
 		prhex("TxHdr", frame, MIN(len, 16));
 	}
@@ -1294,6 +1297,7 @@ dhd_bus_txctl(struct dhd_bus *bus, uchar *msg, uint msglen)
 #ifdef DHD_DEBUG
 		if (DHD_BYTES_ON() && DHD_CTL_ON()) {
 			prhex("Tx Frame", frame, len);
+			// pcap_dump(frame, len);
 		} else if (DHD_HDRS_ON()) {
 			prhex("TxHdr", frame, MIN(len, 16));
 		}
@@ -3651,7 +3655,9 @@ dhdsdio_readframes(dhd_bus_t *bus, uint maxframes, bool *finished)
 
 #ifdef DHD_DEBUG
 			if (DHD_BYTES_ON() && DHD_DATA_ON()) {
-				prhex("Rx Data", rxbuf, len);
+				DHD_TRACE(("%s: chan=%d\n", __FUNCTION__,chan));
+				prhex("Rx Data 0", rxbuf, len);
+				// pcap_dump(rxbuf, len);
 			} else if (DHD_HDRS_ON()) {
 				prhex("RxHdr", bus->rxhdr, SDPCM_HDRLEN);
 			}
@@ -3884,6 +3890,7 @@ dhdsdio_readframes(dhd_bus_t *bus, uint maxframes, bool *finished)
 #ifdef DHD_DEBUG
 		if (DHD_BYTES_ON() && DHD_DATA_ON()) {
 			prhex("Rx Data 1", PKTDATA(osh, pkt), len);
+			//pcap_dump(PKTDATA(osh, pkt), len);
 		}
 #endif
 
@@ -3896,6 +3903,7 @@ deliver:
 #ifdef DHD_DEBUG
 				if (DHD_GLOM_ON()) {
 					prhex("Glom Data", PKTDATA(osh, pkt), len);
+					// pcap_dump(PKTDATA(osh, pkt), len);
 				}
 #endif
 				PKTSETLEN(osh, pkt, len);
@@ -4440,6 +4448,7 @@ dhdsdio_pktgen(dhd_bus_t *bus)
 		if (DHD_BYTES_ON() && DHD_DATA_ON()) {
 			data = (uint8*)PKTDATA(osh, pkt) + SDPCM_HDRLEN;
 			prhex("dhdsdio_pktgen: Tx Data", data, PKTLEN(osh, pkt) - SDPCM_HDRLEN);
+			// pcap_dump(data, PKTLEN(osh, pkt) - SDPCM_HDRLEN);
 		}
 #endif
 
