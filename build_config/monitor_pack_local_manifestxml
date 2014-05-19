@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+   <manifest>
+
+     <remove-project name="CyanogenMod/android_external_libpcap" />
+     <project path="external/libpcap" name="kriswebdev/android_aries_libpcap" revision="master" />
+     <project path="external/aircrack-ng" name="kriswebdev/android_aircrack" revision="master" />
+     <project path="external/macchanger" name="kriswebdev/android_macchanger" revision="1.6.0" />
+     <project path="external/wireless_tools" name="kriswebdev/android_wireless_tools" revision="master" />
+     <project path="kernel/samsung/aries/drivers/net/wireless" name="kriswebdev/bcmon_aries" revision="master" />
+
+   </manifest>
